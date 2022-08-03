@@ -1,10 +1,12 @@
 ## Imports ##
+from ibapi.account_summary_tags import AccountSummaryTags
 from ibapi.contract import Contract
 import pytz
 import math
 from datetime import datetime, timedelta
 import threading
 from model.bar import Bar
+from model.strategies.higherHigh import higherHigh
 from model.strategies.nineEmaCrossoverHigherHighAndLow import nineEmaCrossoverHigherHighAndLow
 from ibapi.client import EClient
 from ibapi.wrapper import EWrapper
@@ -13,10 +15,12 @@ from view.textView import textView
 
 orderId = 1
 
+
 ## Algorithm to Handle Trade Execution ##
 
 class Algo:
-    balance = 0  # Total amount to trade with
+    availableFunds = 0
+    balance = 1000
     ib = None  # Interactive Brokers connection
     currentBar = Bar()  # Current candle
     reqId = 1  # Current request id for pulling data from IBKR
@@ -24,18 +28,20 @@ class Algo:
     initialbartime = datetime.now().astimezone(pytz.timezone("America/New_York"))
     contract = None  # Current contract in-hand
     strategies = []  # Book of strategies that can be traded (CONFIGURABLE)
+    positionSize = 0
+    ibkrCode = 0
     view = textView()
+    bars = []
 
     def __init__(self):
-
+        self.initializeStrategies()
+        self.obtainUserInput()
         self.connectToIBKR()
 
         ## Start the trading process ##
         self.view.renderMessageAndPause("System Starting...")
 
         ## Update Information ##
-        self.initializeStrategies()
-        self.obtainUserInput()
         self.positionSize = round(int(self.balance) / 2)  # 2 represents the total number of trades that will be placed
         self.initContracts()
         self.currentBar = Bar()
@@ -49,7 +55,6 @@ class Algo:
         self.ib.reqIds(-1)
 
         ## Collect Historical Data to Catch Up And Begin Trading ##
-        self.contractBarsMap = dict()
         self.collectHistoricalData()
 
     ## CONFIGURABLE - Enter the contracts for the Algo to cycle here ##
@@ -73,26 +78,43 @@ class Algo:
         QQQ.exchange = "SMART"
         QQQ.currency = "USD"
 
-        self.contractBarsMap = {SPY:[]}
+        self.contract = SPY
 
     ## CONFIGURABLE - Enter the strategies the user can choose from here ##
     def initializeStrategies(self):
 
         ## Append each of the desired strategies to trade to the strategy book ##
         self.strategies.append(nineEmaCrossoverHigherHighAndLow())
+        self.strategies.append(higherHigh())
 
     ## Connect to IBKR TWS upon initialization ##
     def connectToIBKR(self):
         self.ib = IBApi()
-        self.ib.connect("127.0.0.1", 7497, 1)
+        self.ib.connect("127.0.0.1", self.ibkrCode, 1)  # 7497 = paper, 7496 = real trading
         ib_thread = threading.Thread(target=self.run_loop, daemon=True)
         ib_thread.start()
 
     ## Obtain User Input Necessary for Instantiation of the Algorithm and its Fields ##
     def obtainUserInput(self):
 
+        ## Paper Trading or Realtime Trading ##
+        while True:
+            try:
+                self.view.renderMessage("\nType paper for Paper Trading or real for non-simulated trading:\n")
+                pOrR = input()
+                if pOrR == "paper" or pOrR == "real":
+                    if pOrR == "paper":
+                        self.ibkrCode = 7497
+                    else:
+                        self.ibkrCode = 7496
+                else:
+                    raise Exception
+                break
+            except Exception:
+                self.view.renderMessage("Invalid Entry. Try Again...")
+
         ## Inform user of strategy choices ##
-        self.view.renderMessage("\n\n\n\n\n---------- Strategy Library: ----------\n")
+        self.view.renderMessage("\n---------- Strategy Library: ----------\n")
         i = 0
         for s in self.strategies:
             i += 1
@@ -110,10 +132,16 @@ class Algo:
         # User Input: Balance to Trade
         while True:
             try:
-                self.balance = int(input("Enter the desired ceiling for cumulative cash expended: \n"))
+                self.positionSize = int(input("Enter the desired position size: \n"))
                 break
             except Exception:
                 self.view.renderMessage("Invalid Entry. Try Again...")
+
+    # Initializes the account balance for trading #
+    ## TODO: This will not work unless we periodically check the user's balance because the user might place trades while the algo is running, further depleting the balance
+    def obtainAccountInfo(self):
+        self.availableFunds = self.ib.reqAccountSummary(self.reqId, "All", AccountSummaryTags.AvailableFunds)
+        self.reqId += 1
 
     def collectHistoricalData(self):
 
@@ -124,11 +152,10 @@ class Algo:
         if (int(self.timeframe) > 1):
             mintext = " mins"
 
-        for contract in self.contractBarsMap:
-            self.contract = contract
-            self.ib.reqHistoricalData(self.reqId, contract, "", "2 D", str(self.timeframe) + mintext, "TRADES", 1, 1,
-                                      True, [])
-            self.reqId += 1
+        self.ib.reqHistoricalData(self.reqId, self.contract, "", "2 D", str(self.timeframe) + mintext, "TRADES", 1, 1,
+                                  True,
+                                  [])
+        self.reqId += 1
 
     # Listen to socket in seperate thread
     def run_loop(self):
@@ -141,27 +168,24 @@ class Algo:
 
         # Historical Data to catch up
         if (realtime == False):
-            self.contractBarsMap[self.contract].append(bar)
+            self.bars.append(bar)
         else:
             bartime = datetime.strptime(bar.date, "%Y%m%d %H:%M:%S").astimezone(pytz.timezone("America/New_York"))
             minutes_diff = (bartime - self.initialbartime).total_seconds() / 60.0
-            self.currentBar.date = bartime
+
             # On Bar Close
             if (minutes_diff > 0 and math.floor(minutes_diff) % self.timeframe == 0):
                 self.initialbartime = bartime
 
-                self.view.renderMessage("New bar for symbol: " + str(self.contract) + "\n")
-                self.view.renderMessage("Checking strategy criteria for symbol: " + str(self.contract) + "\n")
+                self.view.renderMessage("New bar for symbol: " + self.contract.symbol + "\n")
+                self.view.renderMessage("Checking strategy criteria for symbol: " + self.contract.symbol + "\n")
 
-                if (self.strategy.determineEntry(self.contractBarsMap[self.contract], bar)):
-                    self.view.renderMessage("Initiating position in symbol: " + str(self.contract) + "\n")
+                if self.strategy.determineEntry(self.bars, bar):
+                    self.view.renderMessage("Initiating position in symbol: " + self.contract.symbol + "\n")
                     self.placeOrder(bar.close)
 
                 # Bar closed append
-                self.currentBar.close = bar.close
-                self.contractBarsMap[self.contract].append(self.currentBar)
-                self.currentBar = Bar()
-                self.currentBar.open = bar.open
+                self.bars.append(bar)
 
     def placeOrder(self, close):
         global orderId
@@ -179,7 +203,7 @@ class Algo:
                                              self.contract, close)
         for o in bracket:
             o.ocaGroup = "OCA_" + str(orderId)
-            self.ib.placeOrder(o.orderId, o.contract, o)
+            self.ib.placeOrder(o.orderId, self.contract, o)
         orderId += 3
 
         # Decrement balance based on the value of the trade placed
@@ -234,5 +258,13 @@ class IBApi(EWrapper, EClient):
     def error(self, id, errorCode, errorMsg):
         self.view.renderMessage(errorCode)
         self.view.renderMessage(errorMsg)
+
+    def accountSummary(self, reqId: int, account: str, tag: str, value: str,
+                       currency: str):
+        return value
+
+    def accountSummaryEnd(self, reqId: int):
+        super().accountSummaryEnd(reqId)
+
 
 bot = Algo()
