@@ -1,0 +1,33 @@
+
+                                                 ## TODO List ##
+
+1) Add options functionality for each strategy
+   - Prompt user for shares/options?
+   - Contract selection algo
+
+2) Multiple symbol functionality
+   - Create symbol libraries to choose from?
+   - Prompt user for desired symbols to trade?
+
+3) Integrate user account data
+   - Perpetually update account balance information
+
+4) Complex/recurrent sell orders for certain strategies (exit strategy is not P/L based)
+
+5) Create an optimal data-mgmt system for strategies to do computations based on historical/incoming data
+
+5) Create GUI in html, push to AWS
+   - Make a user guide
+
+6) Populate the strategies section (last)
+   - supply zones (volume accumulation)
+   - support/resistance break
+   - fibonacci retracements
+   - 9ema crosses over VWAP (5min)
+   - prop. fib retracement strategy (mine)
+
+7) Update bot to work remotely and be compatible with any desktop
+
+8) README
+
+9) ML model for certain strategies?
