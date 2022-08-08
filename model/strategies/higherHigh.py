@@ -1,6 +1,6 @@
 from ibapi.order import Order
 
-from model.strategies.IStrategy import IStrategy
+from IStrategy import IStrategy
 
 # Strategy For Testing Only #
 class higherHigh(IStrategy):
@@ -13,7 +13,7 @@ class higherHigh(IStrategy):
     def determineEntry(self, bars, currBar):
 
         # Entry - If we have a higher high then Buy
-
+        
         lastHigh = bars[len(bars) - 2].high
         recentHigh = bars[len(bars) - 1].high
 
