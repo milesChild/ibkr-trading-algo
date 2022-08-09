@@ -1,4 +1,7 @@
 ## Imports ##
+import multiprocessing
+
+import ibapi.ticktype
 from ibapi.account_summary_tags import AccountSummaryTags
 from ibapi.contract import Contract
 import pytz
@@ -6,6 +9,7 @@ import math
 from datetime import datetime, timedelta
 import threading
 from model.bar import Bar
+from model.strategies.bullbreakout import bullbreakout
 from model.strategies.higherHigh import higherHigh
 from model.strategies.nineEmaCrossoverHigherHighAndLow import nineEmaCrossoverHigherHighAndLow
 from ibapi.client import EClient
@@ -20,18 +24,18 @@ orderId = 1
 
 class Algo:
     availableFunds = 0
-    balance = 1000
+    balance = 10000
     ib = None  # Interactive Brokers connection
     currentBar = Bar()  # Current candle
     reqId = 1  # Current request id for pulling data from IBKR
     global orderId  # Current order id for placing trades thru IBKR
     initialbartime = datetime.now().astimezone(pytz.timezone("America/New_York"))
-    contract = None  # Current contract in-hand
     strategies = []  # Book of strategies that can be traded (CONFIGURABLE)
     positionSize = 0
     ibkrCode = 0
     view = textView()
-    bars = []
+    stockData = dict()  # Map of contract to array list of Bars for data storage
+    processIdCache = dict()  # Map of contract to current reqId for contract identification
 
     def __init__(self):
         self.initializeStrategies()
@@ -55,7 +59,12 @@ class Algo:
         self.ib.reqIds(-1)
 
         ## Collect Historical Data to Catch Up And Begin Trading ##
-        self.collectHistoricalData()
+        if __name__ == "__main__":
+            num_processes = len(self.stockData)
+            with multiprocessing.Pool(processes=num_processes) as pool:
+                for c in self.stockData:
+                    pool.map(self.collectHistoricalData(c), [])
+            pool.close()
 
     ## CONFIGURABLE - Enter the contracts for the Algo to cycle here ##
     ## TODO: Make compatable for multiple contracts
@@ -78,7 +87,8 @@ class Algo:
         QQQ.exchange = "SMART"
         QQQ.currency = "USD"
 
-        self.contract = SPY
+        self.stockData = {SPY: [], QQQ: [], AAPL: []}
+        self.processIdCache = {SPY: -1, QQQ: -1, AAPL: -1}
 
     ## CONFIGURABLE - Enter the strategies the user can choose from here ##
     def initializeStrategies(self):
@@ -86,6 +96,7 @@ class Algo:
         ## Append each of the desired strategies to trade to the strategy book ##
         self.strategies.append(nineEmaCrossoverHigherHighAndLow())
         self.strategies.append(higherHigh())
+        self.strategies.append(bullbreakout())
 
     ## Connect to IBKR TWS upon initialization ##
     def connectToIBKR(self):
@@ -143,18 +154,21 @@ class Algo:
         self.availableFunds = self.ib.reqAccountSummary(self.reqId, "All", AccountSummaryTags.AvailableFunds)
         self.reqId += 1
 
-    def collectHistoricalData(self):
+    def collectHistoricalData(self, contract):
 
         ## Request Market Data ##
-        self.view.renderMessage("\n" + "Collecting Historical Data..." + "\n")
+        self.view.renderMessage("\n" + "Collecting Historical Data for: " + str(contract.symbol) + "\n")
 
         mintext = " min"
         if (int(self.timeframe) > 1):
             mintext = " mins"
 
-        self.ib.reqHistoricalData(self.reqId, self.contract, "", "2 D", str(self.timeframe) + mintext, "TRADES", 1, 1,
+        self.ib.reqHistoricalData(self.reqId, contract, "", "2 D", str(self.timeframe) + mintext, "TRADES", 1, 1,
                                   True,
                                   [])
+
+        # Update the reqId for contract identification in processesIdCache
+        self.processIdCache[contract] = self.reqId
         self.reqId += 1
 
     # Listen to socket in seperate thread
@@ -166,9 +180,14 @@ class Algo:
 
         global orderId
 
+        key_list = list(self.processIdCache.keys())
+        val_list = list(self.processIdCache.values())
+        contractPosition = val_list.index(reqId)
+        contractInHand = key_list[contractPosition]
+
         # Historical Data to catch up
         if (realtime == False):
-            self.bars.append(bar)
+            self.stockData[contractInHand].append(bar)
         else:
             bartime = datetime.strptime(bar.date, "%Y%m%d %H:%M:%S").astimezone(pytz.timezone("America/New_York"))
             minutes_diff = (bartime - self.initialbartime).total_seconds() / 60.0
@@ -177,21 +196,21 @@ class Algo:
             if (minutes_diff > 0 and math.floor(minutes_diff) % self.timeframe == 0):
                 self.initialbartime = bartime
 
-                self.view.renderMessage("New bar for symbol: " + self.contract.symbol + "\n")
-                self.view.renderMessage("Checking strategy criteria for symbol: " + self.contract.symbol + "\n")
+                self.view.renderMessage("New bar for symbol: " + contractInHand.symbol + "\n")
+                self.view.renderMessage("Checking strategy criteria for symbol: " + contractInHand.symbol + "\n")
 
-                if self.strategy.determineEntry(self.bars, bar):
-                    self.view.renderMessage("Initiating position in symbol: " + self.contract.symbol + "\n")
-                    self.placeOrder(bar.close)
+                if self.strategy.determineEntry(self.stockData[contractInHand], bar):
+                    self.view.renderMessage("Initiating position in symbol: " + contractInHand.symbol + "\n")
+                    self.placeOrder(contractInHand, bar.close)
 
                 # Bar closed append
-                self.bars.append(bar)
+                self.stockData[contractInHand].append(bar)
 
-    def placeOrder(self, close):
+    def placeOrder(self, contract, close):
         global orderId
 
         self.view.renderMessage("Strategy triggered...\n")
-        self.view.renderMessage("Placing order...\n")
+        self.view.renderMessage("Placing order for symbol: " + str(contract.symbol) + "...\n")
         qty = self.calculateQuantity(close)
 
         # Do not place order if it will cause a negative balance
@@ -200,10 +219,10 @@ class Algo:
             return
 
         bracket = self.strategy.bracketOrder(orderId, qty,
-                                             self.contract, close)
+                                             contract, close)
         for o in bracket:
             o.ocaGroup = "OCA_" + str(orderId)
-            self.ib.placeOrder(o.orderId, self.contract, o)
+            self.ib.placeOrder(o.orderId, contract, o)
         orderId += 3
 
         # Decrement balance based on the value of the trade placed
@@ -211,6 +230,7 @@ class Algo:
 
     # Not finished: Need more elaborate quantity calculation
     def calculateQuantity(self, close):
+
         return round(self.positionSize / close)
 
 

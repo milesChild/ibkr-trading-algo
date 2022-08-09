@@ -1,5 +1,5 @@
 
-                                                 ## TODO List ##
+                                                 ## To Do List ##
 
 1) Add options functionality for each strategy
    - Prompt user for shares/options?
@@ -15,6 +15,10 @@
 4) Complex/recurrent sell orders for certain strategies (exit strategy is not P/L based)
 
 5) Create an optimal data-mgmt system for strategies to do computations based on historical/incoming data
+   - Use pandas to convert data requests into a CSV file?
+        1) Require the strategies individually to make specific data requests
+        2) Store in a central location, keep track of the file names that were used to make the trade
+        3) Clear the cache (appropriately) when a trade is executed (for data use optimization)
 
 5) Create GUI in html, push to AWS
    - Make a user guide

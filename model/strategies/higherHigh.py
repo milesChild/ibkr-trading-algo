@@ -1,8 +1,11 @@
 from ibapi.order import Order
 
-from IStrategy import IStrategy
+
 
 # Strategy For Testing Only #
+from model.strategies.IStrategy import IStrategy
+
+
 class higherHigh(IStrategy):
 
     def __init__(self):
