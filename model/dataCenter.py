@@ -3,16 +3,22 @@ import multiprocessing
 import pytz
 import math
 from datetime import datetime
+import time
+
+reqId = 1
 
 class dataCenter:
     dataStreams = dict()
     ib = None
+    global reqId
     timeframe = 1  # Requests only the highest granularity of data
     processIdCache = dict()
+    initialbartime = datetime.now().astimezone(pytz.timezone("America/New_York"))
 
     ## To construct a dataCenter with an interactive brokers connection object
     def __init__(self, ib, contracts):
         self.ib = ib
+        self.ib.connectDataCenter(self)
 
         for c in contracts:
             self.dataStreams[c] = []
@@ -21,7 +27,9 @@ class dataCenter:
     def streamData(self):
 
         ## Collect Historical Data to Catch Up And Begin Trading ##
-        if __name__ == "__main__":
+        print("Streaming Data")
+        print(self.dataStreams)
+        if __name__ != "__main__":
             num_processes = len(self.dataStreams)
             with multiprocessing.Pool(processes=num_processes) as pool:
                 for c in self.dataStreams:
@@ -42,10 +50,10 @@ class dataCenter:
         # Update the reqId for contract identification in processesIdCache
         self.processIdCache[contract] = reqId
         reqId += 1
+        print("Initialized Data Stream for: " + str(contract.symbol) + "\n")
+        time.sleep(.5)
 
     def updateData(self, reqId, bar, realtime):
-
-        global orderId
 
         key_list = list(self.processIdCache.keys())
         val_list = list(self.processIdCache.values())
@@ -61,4 +69,5 @@ class dataCenter:
 
             # On Bar Close
             if (minutes_diff > 0 and math.floor(minutes_diff) % self.timeframe == 0):
-                self.stockData[contractInHand].append(bar)
+                self.dataStreams[contractInHand].append(bar)
+                print("Added new bar for: " + str(contractInHand.symbol))

@@ -18,7 +18,6 @@ from view.textView import textView
 orderId = 1
 reqId = 1
 
-
 ## Algorithm to Handle Trade Execution ##
 
 class Algo:
@@ -59,14 +58,7 @@ class Algo:
         self.ib.reqIds(-1)
         self.dataCenter = dataCenter(self.ib, self.stockData.keys())
 
-        ## Collect Historical Data to Catch Up And Begin Trading ##
-        if __name__ == "__main__":
-            num_processes = len(self.stockData)
-            with multiprocessing.Pool(processes=num_processes) as pool:
-                for c in self.stockData:
-                    pool.map(self.collectHistoricalData(c), [])
-                    #self.delayAmt += 1
-            pool.close()
+        self.dataCenter.streamData()
 
     ## CONFIGURABLE - Enter the contracts for the Algo to cycle here ##
     ## TODO: Make compatable for multiple contracts
@@ -103,6 +95,7 @@ class Algo:
     ## Connect to IBKR TWS upon initialization ##
     def connectToIBKR(self):
         self.ib = IBApi()
+        self.ib.connectAlgo(self)
         self.ib.connect("127.0.0.1", self.ibkrCode, 1)  # 7497 = paper, 7496 = real trading
         ib_thread = threading.Thread(target=self.run_loop, daemon=True)
         ib_thread.start()
@@ -237,3 +230,5 @@ class Algo:
     def calculateQuantity(self, close):
 
         return round(self.positionSize / close)
+
+Algo = Algo()
