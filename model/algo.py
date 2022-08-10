@@ -18,6 +18,7 @@ from ibapi.wrapper import EWrapper
 from view.textView import textView
 
 orderId = 1
+reqId = 1
 
 
 ## Algorithm to Handle Trade Execution ##
@@ -27,7 +28,7 @@ class Algo:
     balance = 10000
     ib = None  # Interactive Brokers connection
     currentBar = Bar()  # Current candle
-    reqId = 1  # Current request id for pulling data from IBKR
+    global reqId  # Current request id for pulling data from IBKR
     global orderId  # Current order id for placing trades thru IBKR
     initialbartime = datetime.now().astimezone(pytz.timezone("America/New_York"))
     strategies = []  # Book of strategies that can be traded (CONFIGURABLE)
@@ -153,8 +154,8 @@ class Algo:
     # Initializes the account balance for trading #
     ## TODO: This will not work unless we periodically check the user's balance because the user might place trades while the algo is running, further depleting the balance
     def obtainAccountInfo(self):
-        self.availableFunds = self.ib.reqAccountSummary(self.reqId, "All", AccountSummaryTags.AvailableFunds)
-        self.reqId += 1
+        self.availableFunds = self.ib.reqAccountSummary(reqId, "All", AccountSummaryTags.AvailableFunds)
+        reqId += 1
 
     def collectHistoricalData(self, contract):
 
@@ -168,13 +169,13 @@ class Algo:
         if (int(self.timeframe) > 1):
             mintext = " mins"
 
-        self.ib.reqHistoricalData(self.reqId, contract, "", "2 D", str(self.timeframe) + mintext, "TRADES", 1, 1,
+        self.ib.reqHistoricalData(reqId, contract, "", "2 D", str(self.timeframe) + mintext, "TRADES", 1, 1,
                                   True,
                                   [])
 
         # Update the reqId for contract identification in processesIdCache
-        self.processIdCache[contract] = self.reqId
-        self.reqId += 1
+        self.processIdCache[contract] = reqId
+        reqId += 1
 
     # Listen to socket in seperate thread
     def run_loop(self):
