@@ -1,6 +1,5 @@
 ## Imports ##
 import multiprocessing
-
 from ibapi.account_summary_tags import AccountSummaryTags
 from ibapi.contract import Contract
 import pytz
@@ -9,12 +8,11 @@ from datetime import datetime, timedelta
 import time
 import threading
 from model.bar import Bar
+from model.dataCenter import dataCenter
+from model.ibkrConnection import IBApi
 from model.strategies.bullbreakout import bullbreakout
 from model.strategies.higherHigh import higherHigh
 from model.strategies.nineEmaCrossoverHigherHighAndLow import nineEmaCrossoverHigherHighAndLow
-from ibapi.client import EClient
-from ibapi.wrapper import EWrapper
-
 from view.textView import textView
 
 orderId = 1
@@ -37,7 +35,7 @@ class Algo:
     view = textView()
     stockData = dict()  # Map of contract to array list of Bars for data storage
     processIdCache = dict()  # Map of contract to current reqId for contract identification
-    delayAmt = 0
+    dataCenter = None
 
     def __init__(self):
         self.initializeStrategies()
@@ -59,6 +57,7 @@ class Algo:
             microsecond=0).strftime(
             "%Y%m%d %H:%M:%S")
         self.ib.reqIds(-1)
+        self.dataCenter = dataCenter(self.ib, self.stockData.keys())
 
         ## Collect Historical Data to Catch Up And Begin Trading ##
         if __name__ == "__main__":
@@ -238,60 +237,3 @@ class Algo:
     def calculateQuantity(self, close):
 
         return round(self.positionSize / close)
-
-
-## Connection to Interactive Brokers ##
-
-class IBApi(EWrapper, EClient):
-    view = textView()
-
-    def __init__(self):
-        EClient.__init__(self, self)
-
-        ## Callbacks ##
-
-    # Historical Backtest Data
-    def historicalData(self, reqId, bar):
-        try:
-            time.sleep(1)
-            bot.on_bar_update(reqId, bar, False)
-        except Exception as e:
-            self.view.renderMessage(e)
-
-    # On Realtime Bar after historical data finishes
-    def historicalDataUpdate(self, reqId, bar):
-        try:
-            time.sleep(1)
-            bot.on_bar_update(reqId, bar, True)
-        except Exception as e:
-            self.view.renderMessage(e)
-
-    # On Historical Data End
-    def historicalDataEnd(self, reqId, start, end):
-        self.view.renderMessage(reqId)
-
-    # Get next order id we can use
-    def nextValidId(self, nextorderId):
-        global orderId
-        orderId = nextorderId
-
-    # Listen for realtime bars
-    def realtimeBar(self, reqId, time, open_, high, low, close, volume, wap, count):
-        super().realtimeBar(reqId, time, open_, high, low, close, volume, wap, count)
-        try:
-            bot.on_bar_update(reqId, time, open_, high, low, close, volume, wap, count)
-        except Exception as e:
-            self.view.renderMessage(e)
-
-    def error(self, id, errorCode, errorMsg):
-        self.view.renderMessage(errorCode)
-        self.view.renderMessage(errorMsg)
-
-    def accountSummary(self, reqId: int, account: str, tag: str, value: str,
-                       currency: str):
-        return value
-
-    def accountSummaryEnd(self, reqId: int):
-        super().accountSummaryEnd(reqId)
-
-bot = Algo()
