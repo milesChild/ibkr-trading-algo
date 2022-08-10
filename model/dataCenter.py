@@ -1,0 +1,1 @@
+## Class to Handle Storage of Market Data Streams from IBKR to be

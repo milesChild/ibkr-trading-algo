@@ -1,12 +1,12 @@
 ## Imports ##
 import multiprocessing
 
-import ibapi.ticktype
 from ibapi.account_summary_tags import AccountSummaryTags
 from ibapi.contract import Contract
 import pytz
 import math
 from datetime import datetime, timedelta
+import time
 import threading
 from model.bar import Bar
 from model.strategies.bullbreakout import bullbreakout
@@ -36,6 +36,7 @@ class Algo:
     view = textView()
     stockData = dict()  # Map of contract to array list of Bars for data storage
     processIdCache = dict()  # Map of contract to current reqId for contract identification
+    delayAmt = 0
 
     def __init__(self):
         self.initializeStrategies()
@@ -64,6 +65,7 @@ class Algo:
             with multiprocessing.Pool(processes=num_processes) as pool:
                 for c in self.stockData:
                     pool.map(self.collectHistoricalData(c), [])
+                    #self.delayAmt += 1
             pool.close()
 
     ## CONFIGURABLE - Enter the contracts for the Algo to cycle here ##
@@ -156,6 +158,9 @@ class Algo:
 
     def collectHistoricalData(self, contract):
 
+        time.sleep(self.delayAmt)
+        self.delayAmt += .5
+
         ## Request Market Data ##
         self.view.renderMessage("\n" + "Collecting Historical Data for: " + str(contract.symbol) + "\n")
 
@@ -247,6 +252,7 @@ class IBApi(EWrapper, EClient):
     # Historical Backtest Data
     def historicalData(self, reqId, bar):
         try:
+            time.sleep(1)
             bot.on_bar_update(reqId, bar, False)
         except Exception as e:
             self.view.renderMessage(e)
@@ -254,6 +260,7 @@ class IBApi(EWrapper, EClient):
     # On Realtime Bar after historical data finishes
     def historicalDataUpdate(self, reqId, bar):
         try:
+            time.sleep(1)
             bot.on_bar_update(reqId, bar, True)
         except Exception as e:
             self.view.renderMessage(e)
@@ -285,6 +292,5 @@ class IBApi(EWrapper, EClient):
 
     def accountSummaryEnd(self, reqId: int):
         super().accountSummaryEnd(reqId)
-
 
 bot = Algo()
