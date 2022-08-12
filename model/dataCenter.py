@@ -14,6 +14,7 @@ class dataCenter:
     timeframe = 1  # Requests only the highest granularity of data
     processIdCache = dict()
     initialbartime = datetime.now().astimezone(pytz.timezone("America/New_York"))
+    delayFactor = .5
 
     ## To construct a dataCenter with an interactive brokers connection object
     def __init__(self, ib, contracts):
@@ -28,7 +29,7 @@ class dataCenter:
 
         ## Collect Historical Data to Catch Up And Begin Trading ##
         print("Streaming Data")
-        print(self.dataStreams)
+        print(len(self.dataStreams))
         if __name__ != "__main__":
             num_processes = len(self.dataStreams)
             with multiprocessing.Pool(processes=num_processes) as pool:
@@ -37,6 +38,8 @@ class dataCenter:
             pool.close()
 
     def collectHistoricalData(self, contract):
+        self.delayFactor += .5
+        time.sleep(self.delayFactor)
 
         global reqId
         mintext = " min"
@@ -51,7 +54,6 @@ class dataCenter:
         self.processIdCache[contract] = reqId
         reqId += 1
         print("Initialized Data Stream for: " + str(contract.symbol) + "\n")
-        time.sleep(.5)
 
     def updateData(self, reqId, bar, realtime):
 
@@ -71,3 +73,5 @@ class dataCenter:
             if (minutes_diff > 0 and math.floor(minutes_diff) % self.timeframe == 0):
                 self.dataStreams[contractInHand].append(bar)
                 print("Added new bar for: " + str(contractInHand.symbol))
+                time.sleep(1)
+                print(self.dataStreams[contractInHand])

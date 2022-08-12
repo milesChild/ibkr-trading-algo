@@ -1,5 +1,4 @@
 ## Imports ##
-import multiprocessing
 from ibapi.account_summary_tags import AccountSummaryTags
 from ibapi.contract import Contract
 import pytz
@@ -99,6 +98,7 @@ class Algo:
         self.ib.connect("127.0.0.1", self.ibkrCode, 1)  # 7497 = paper, 7496 = real trading
         ib_thread = threading.Thread(target=self.run_loop, daemon=True)
         ib_thread.start()
+        time.sleep(1)
 
     ## Obtain User Input Necessary for Instantiation of the Algorithm and its Fields ##
     def obtainUserInput(self):
@@ -150,9 +150,6 @@ class Algo:
         reqId += 1
 
     def collectHistoricalData(self, contract):
-
-        time.sleep(self.delayAmt)
-        self.delayAmt += .5
 
         ## Request Market Data ##
         self.view.renderMessage("\n" + "Collecting Historical Data for: " + str(contract.symbol) + "\n")
@@ -231,4 +228,4 @@ class Algo:
 
         return round(self.positionSize / close)
 
-Algo = Algo()
+Algo()
