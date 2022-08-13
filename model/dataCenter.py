@@ -1,6 +1,6 @@
 ## Class to Handle Storage of Market Data Streams from IBKR to be Used By Strategies ##
 import multiprocessing
-
+from threading import Thread 
 
 class dataCenter:
     dataStreams = dict()
@@ -38,4 +38,5 @@ class dataCenter:
 
         # Update the reqId for contract identification in processesIdCache
         reqId += 1
+
 
