@@ -12,6 +12,12 @@ from model.ibkrConnection import IBApi
 from model.strategies.bullbreakout import bullbreakout
 from model.strategies.higherHigh import higherHigh
 from model.strategies.nineEmaCrossoverHigherHighAndLow import nineEmaCrossoverHigherHighAndLow
+
+from ibapi.client import EClient
+from ibapi.wrapper import EWrapper
+import multiprocessing
+import concurrent.futures
+
 from view.textView import textView
 
 orderId = 1
@@ -57,7 +63,13 @@ class Algo:
         self.ib.reqIds(-1)
         self.dataCenter = dataCenter(self.ib, self.stockData.keys())
 
+
         self.dataCenter.streamData()
+
+        ## Collect Historical Data to Catch Up And Begin Trading ##
+        
+        self.collectHistoricalData()
+
 
     ## CONFIGURABLE - Enter the contracts for the Algo to cycle here ##
     ## TODO: Make compatable for multiple contracts
