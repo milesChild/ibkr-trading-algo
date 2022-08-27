@@ -1,24 +1,28 @@
 # imports:
 import time
 
-
 # Delegates trade qualifications to the strategies. If a trade is qualified, then it requests order information
 # from that strategy and transmits it to the ibkr comms. object.
 
 class autoTrader:
+    controlCenter = None
+    positionSize = 0
+    strategies = dict()
 
-    def __init__(self, userComms, ibkrComms):
-        self.userComms = userComms
-        self.ibkrComms = ibkrComms
-        self.strategies = dict() # Strategy -> Contracts
+    def __init__(self):
         self.positionSize = 0
+        self.strategies = dict() # Strategy -> Contract[]
 
-    # Strategies: dict(Strategy -> Contracts to be traded for that strategy)
-    def setStrategies(self, strategies):
-        self.strategies = strategies
+    ## Connect to the Control Center for communication with other pieces of the algo ##
+    def connectControlCenter(self, cc):
+        self.controlCenter = cc
 
-    def setPositionSize(self, positionSize):
-        self.positionSize = positionSize
+    def reqUserInputs(self):
+        ps = self.controlCenter.userComms.userInput["positionSize"]
+        s = self.controlCenter.userComms.userInput["strategies"]
+
+        self.positionSize = ps
+        self.strategies = s
 
     def searchForTrades(self):
 

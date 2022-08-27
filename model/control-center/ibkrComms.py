@@ -10,7 +10,6 @@ class ibkrComms:
 
     def __init__(self):
         self.connectToIBKR()
-        self.connectControlCenter()
 
     ## Connect to IBKR TWS upon initialization ##
     def connectToIBKR(self):
