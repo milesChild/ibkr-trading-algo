@@ -3,14 +3,14 @@
 # Class for communication to/from interactive brokers
 import threading
 import time
-
 from model.ibkrConnection import IBApi
 
-
 class ibkrComms:
+    controlCenter = None
 
     def __init__(self):
         self.connectToIBKR()
+        self.connectControlCenter()
 
     ## Connect to IBKR TWS upon initialization ##
     def connectToIBKR(self):
@@ -21,15 +21,34 @@ class ibkrComms:
         ib_thread.start()
         time.sleep(1)
 
-    def transmitOrder(self, order):
+    ## Connect to the Control Center for communication with other pieces of the algo ##
+    def connectControlCenter(self, cc):
+        self.controlCenter = cc
+
+    # Takes a non-empty list of orders and transmits them to Interactive Brokers to be executed.
+    # Notifies the user every time an order is placed.
+    # orders: list[dict(symbol -> order)]
+    def transmitOrder(self, orders):
         global orderId
 
-        ## if bracket, then
-        for o in bracket:
-            o.ocaGroup = "OCA_" + str(orderId)
-            self.ib.placeOrder(o.orderId, contract, o)
-        orderId += 3
+        for pair in orders:
 
-        ## else
-        self.ib.placeOrder(order.orderId, order.contract, order)
-        orderId += 1
+            contract = pair.key
+            o = pair.value
+
+            # If the current order is a bracket order, then send all suborders
+            if isinstance(o, list):
+                for bo in o:
+                    bo.ocaGroup = "OCA_" + str(orderId)
+                    self.ib.placeOrder(bo.orderId, contract, bo)
+                    orderId += 3
+                    ## Placing Order: BUY/SELL 100 SPY
+                    self.userComms.transmitMessage("Placing Order: " + str(bo.action) + " " + bo.totalQuantity
+                                                   + " " + str(contract.symbol))
+            # If the current order is not a bracket order, just send the order
+            else:
+                o.ocaGroup = "OCA_" + str(orderId)
+                self.ib.placeOrder(o.orderId, contract, o)
+                orderId += 1
+                self.userComms.transmitMessage("Placing Order: " + str(o.action) + " " + o.totalQuantity
+                                               + " " + str(contract.symbol))
