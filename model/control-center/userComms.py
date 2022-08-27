@@ -8,6 +8,10 @@ class userComms:
         self.log = open('model/log', 'w')
         self.writer = csv.writer(self.log)
 
+    ## TODO
+    def collectUserInput(self):
+        return
+
     def transmitMessage(self, msg):
         self.view.renderMessage(msg)
         self.writer.writerow(msg)
