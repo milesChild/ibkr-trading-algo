@@ -1,6 +1,5 @@
 import time
 
-
 class textView:
     description = None
 
@@ -8,7 +7,7 @@ class textView:
         self.description = "Basic Text Viewing Class"
 
     def renderMessage(self, str):
-        print(str)
+        print(str + "\n")
 
     def renderMessageAndPause(self, str):
         self.renderMessage(str)
