@@ -27,4 +27,4 @@ class newTrader:
     Otherwise do nothing
     """
     def checkTime(self):
-        if
+        return
