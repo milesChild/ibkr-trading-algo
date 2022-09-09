@@ -6,19 +6,14 @@ import math
 from datetime import datetime, timedelta
 import time
 import threading
-from model.bar import Bar
-from model.dataCenter import dataCenter
-from model.ibkrConnection import IBApi
-from model.strategies.bullbreakout import bullbreakout
-from model.strategies.higherHigh import higherHigh
-from model.strategies.nineEmaCrossoverHigherHighAndLow import nineEmaCrossoverHigherHighAndLow
+from oldmodel.bar import Bar
+from oldmodel.dataCenter import dataCenter
+from oldmodel.ibkrConnection import IBApi
+from oldmodel.strategies.bullbreakout import bullbreakout
+from oldmodel.strategies.higherHigh import higherHigh
+from oldmodel.strategies.nineEmaCrossoverHigherHighAndLow import nineEmaCrossoverHigherHighAndLow
 
-from ibapi.client import EClient
-from ibapi.wrapper import EWrapper
-import multiprocessing
-import concurrent.futures
-
-from view.textView import textView
+from oldmodel.view import textView
 
 orderId = 1
 reqId = 1

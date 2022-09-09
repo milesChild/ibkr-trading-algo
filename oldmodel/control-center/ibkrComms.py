@@ -3,7 +3,7 @@
 # Class for communication to/from interactive brokers
 import threading
 import time
-from model.ibkrConnection import IBApi
+from oldmodel.ibkrConnection import IBApi
 
 class ibkrComms:
     controlCenter = None

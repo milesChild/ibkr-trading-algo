@@ -1,31 +1,33 @@
+from ibapi.contract import Contract
 from ibapi.order import Order
 
+from oldmodel.strategies.IStrategy import IStrategy
 
-
-# Strategy For Testing Only #
-from model.strategies.IStrategy import IStrategy
-
-
-class higherHigh(IStrategy):
+class bullbreakout(IStrategy):
 
     def __init__(self):
-        self.description = "Entry: Higher High (USED FOR TESTING PURPOSES)"
+        self.description = "Entry: Bullish Reversal of last 5 candles."
         self.timeframe = 1
         global orderId
 
     def determineEntry(self, bars, currBar):
-
-        # Entry - If we have a higher high then Buy
-        
-        lastHigh = bars[len(bars) - 2].high
-        recentHigh = bars[len(bars) - 1].high
-
-        print("Last High:" + str(lastHigh))
-        print("Most Recent High:" + str(recentHigh))
-
-        # Check Criteria
-        if currBar.high > lastHigh:
+        # Checks if most recent bar is higher than previous bar
+        lastBar = bars[len(bars) - 1]
+        if lastBar.close > bars[len(bars) - 2].close:
+            # sorts into most recent 4 candles
+            checkList = bars[(len(bars) - 5):(len(bars) - 1)]
+            # loops to make sure every succeding candle is lower than the last
+            while checkList != []:
+                # check highs
+                index1 = bars.index(checkList[0])
+                index2 = bars.index(checkList[1])
+                close1 = bars[index1].close
+                close2 = bars[index2].close
+                if close1 < close2: return False
+                checkList = checkList[1::]
+            # enter if most recent candle is first green after 4 red candles
             return True
+        return False
 
     def bracketOrder(self, parentOrderId, quantity, contract, last):
         profitTarget = last * 1.01

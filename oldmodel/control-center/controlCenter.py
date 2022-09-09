@@ -4,9 +4,9 @@ import autoTrader
 import ibkrComms
 
 ## USER RUNS PROGRAM HERE ##
-from model.strategies.bullbreakout import bullbreakout
-from model.strategies.higherHigh import higherHigh
-from model.strategies.nineEmaCrossoverHigherHighAndLow import nineEmaCrossoverHigherHighAndLow
+from oldmodel.strategies.bullbreakout import bullbreakout
+from oldmodel.strategies.higherHigh import higherHigh
+from oldmodel.strategies.nineEmaCrossoverHigherHighAndLow import nineEmaCrossoverHigherHighAndLow
 
 
 class controlCenter:

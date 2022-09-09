@@ -1,7 +1,7 @@
 ## Connection to Interactive Brokers ##
 from ibapi.client import EClient
 from ibapi.wrapper import EWrapper
-from view.textView import textView
+from oldmodel.view import textView
 
 class IBApi(EWrapper, EClient):
     view = textView()

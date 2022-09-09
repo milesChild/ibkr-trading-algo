@@ -1,41 +1,30 @@
-from ibapi.contract import Contract
 from ibapi.order import Order
 
-from model.strategies.IStrategy import IStrategy
-import ta
-import numpy as np
-import pandas as pd
 
-class nineEmaCrossoverHigherHighAndLow(IStrategy):
+
+# Strategy For Testing Only #
+from oldmodel.strategies.IStrategy import IStrategy
+
+
+class higherHigh(IStrategy):
 
     def __init__(self):
-        self.description = "Entry: Cross of 9ema, Higher High, Higher Low"
+        self.description = "Entry: Higher High (USED FOR TESTING PURPOSES)"
         self.timeframe = 1
         global orderId
-        self.smaPeriod = 9
 
     def determineEntry(self, bars, currBar):
 
-        # Entry - If we have a higher high, a higher low and we cross the 50 SMA Buy
-        # 1.) SMA
-        closes = []
-        for bar in bars:
-            closes.append(bar.close)
-        close_array = pd.Series(np.asarray(closes))
-        sma = ta.trend._sma(close_array, self.smaPeriod, True)
-        print("SMA : " + str(sma[len(sma) - 1]))
+        # Entry - If we have a higher high then Buy
+        
+        lastHigh = bars[len(bars) - 2].high
+        recentHigh = bars[len(bars) - 1].high
 
-        # 2.) Calculate Higher Highs and Lows
-        lastBar = bars[len(bars) - 1]
-        lastLow = lastBar.low
-        lastHigh = lastBar.high
-        lastClose = lastBar.close
+        print("Last High:" + str(lastHigh))
+        print("Most Recent High:" + str(recentHigh))
 
         # Check Criteria
-        if (currBar.close > lastHigh
-                and currBar.low > lastLow
-                and currBar.close > sma[len(sma) - 1]
-                and lastClose < sma[len(sma) - 2]):
+        if currBar.high > lastHigh:
             return True
 
     def bracketOrder(self, parentOrderId, quantity, contract, last):

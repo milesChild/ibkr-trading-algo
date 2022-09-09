@@ -2,7 +2,7 @@
 import csv
 
 # Hub for communication between the user and the algo #
-from view.textView import textView
+from oldmodel.view.textView import textView
 
 class userComms:
 
@@ -11,7 +11,7 @@ class userComms:
     userInput = dict()
 
     def __init__(self):
-        self.log = open('model/log', 'w')
+        self.log = open('oldmodel/log', 'w')
         self.writer = csv.writer(self.log)
         self.view = textView()
 
