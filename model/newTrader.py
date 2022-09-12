@@ -12,6 +12,7 @@ class newTrader:
     def __init__(self):
         """
         Initialize objects for each instrument-strategy pair and the Polygon websocket object.
+        TODO: add code to initialize risk management operation
         """
         self.__initialize_strategies()
         self.last_msg: WebSocketMessage = None
@@ -22,7 +23,7 @@ class newTrader:
         """
         Run Polygon websocket and begin trading on new messages (public).
         """
-        self.socket_client.run(self.__handle_msg)
+        self.socket_client.connect(self.__handle_msg)
 
     def __handle_msg(self, msg: WebSocketMessage):
         """
