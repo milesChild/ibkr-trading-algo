@@ -17,6 +17,7 @@ class BBout:
     scaledEntry = False # Total entry occurs in one singular order
     scaledExit = False # Total entry occurs in one singular order
     historicalData = dict() # Storage area for necessary historical data
+    contracts = []
 
     def __init__(self):
         self.historicalData = {"TriggerPrice": dict(), "LastTick": dict()}
@@ -65,4 +66,5 @@ What is missing?
   - Order logging/storage of necessary information
   - Error handling
   - Specifics on how collectHistoricalData will be implemented/refreshed according to the strategy's requirements
+  
 """
