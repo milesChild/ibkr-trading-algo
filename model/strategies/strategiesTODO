@@ -1,0 +1,7 @@
+TODO List for Strategies:
+
+1.) Implement a scaled entry and exit system
+
+2.) Implement a system for storing/identifying the proper position size for a trade
+
+3.) Design a strategy that makes scaled entries based on chart events
