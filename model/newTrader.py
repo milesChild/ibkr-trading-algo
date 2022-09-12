@@ -48,7 +48,6 @@ class newTrader:
         writer = csv.writer(self.log)
         writer.writerow(msg)
 
-
     def start(self):
         """
         Run Polygon websocket and begin trading on new messages (public).
@@ -71,10 +70,12 @@ class newTrader:
         self.__check_time()
         # second, make sure we are at healthy risk levels before continuing to trade
         self.__manage_risk()
-        # third, search for positions to enter
+        # third, search for positions to enter (these orders are appended to self.tradeQueue)
         self.__enter_trades()
-        # fourth, manage current positions
+        # fourth, manage current positions (these orders are appended to self.tradeQueue)
         self.__manage_positions()
+        # lastly, empty the queue and reiterate thru the loop
+        self.__empty_queue()
 
     def __check_time(self):
         """
@@ -82,4 +83,42 @@ class newTrader:
         If the time is 3:59 then begin closing positions and quit looking for new positions
         Otherwise do nothing
         """
+        return
+
+    def __manage_risk(self):
+        # TODO: Use a rm object to determine whether positions need to be liquidated/trading needs to stop
+        return
+
+    """
+    Empty the order queue and transmit orders one-by-one to ibkr
+    """
+    def __empty_queue(self):
+        for order in self.tradeQueue:
+            # This will require refinement of parameters passed... see old model for examples
+            self.broker.transmitOrder(order)
+            # update position information based on the order that was just submitted
+
+    """
+    Updates the status/parameters of a position based on a transmitted order
+    """
+    def __update_position(self, order):
+        # TODO
+        return
+
+    """
+    Find positions to enter by consulting strategies and accumulating orders.
+    """
+    def __enter_trades(self):
+        # TODO:
+        return
+
+    """
+    Manage open positions.
+      - Determine if exits should be made for open positions
+      - Continue filling scaled-entries and scaled-exits
+    Any qualified order that results from strategy consultation is appended to the tradeQueue and emptied on 
+    each iteration.
+    """
+    def __manage_positions(self):
+        # TODO:
         return
