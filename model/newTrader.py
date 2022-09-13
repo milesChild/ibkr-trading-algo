@@ -19,20 +19,26 @@ class newTrader:
         Initialize objects for each instrument-strategy pair and the Polygon websocket object.
         TODO: add code to initialize risk management operation
         """
-        self.connect_to_broker()
-        self.log = self.init_log()
+        self.__connect_to_broker()
+        self.log = self.__init_log()
         self.__initialize_strategies()
         self.last_msg: WebSocketMessage = None
         self.socket_client = WebSocketClient(subscriptions=[
                                              "object should provide a field or a method to efficiently grab all contracts"])
 
+    def start(self):
+        """
+        Run Polygon websocket and begin trading on new messages (public).
+        """
+        self.socket_client.connect(self.__handle_msg)
+
     # Method that initializes a connection between this system and the wrapped ibkr api on another server
-    def connect_to_broker(self):
+    def __connect_to_broker(self):
         # TODO: Connect to the broker via an api?
         return
 
     # Initialize the file to which a log will be written
-    def init_log(self):
+    def __init_log(self):
         # open the file in the write mode
         f = open('ibkr-algo/model', 'w')
 
@@ -44,16 +50,10 @@ class newTrader:
         return
 
     # Append a message to the log
-    def append_to_log(self, msg):
+    def __append_to_log(self, msg):
         # create the csv writer
         writer = csv.writer(self.log)
         writer.writerow(msg)
-
-    def start(self):
-        """
-        Run Polygon websocket and begin trading on new messages (public).
-        """
-        self.socket_client.connect(self.__handle_msg)
 
     def __handle_msg(self, msg: WebSocketMessage):
         """
@@ -90,36 +90,36 @@ class newTrader:
         # TODO: Use a rm object to determine whether positions need to be liquidated/trading needs to stop
         return
 
-    """
-    Empty the order queue and transmit orders one-by-one to ibkr
-    """
     def __empty_queue(self):
+        """
+        Empty the order queue and transmit orders one-by-one to ibkr
+        """
         for order in self.tradeQueue:
             # This will require refinement of parameters passed... see old model for examples
             self.broker.transmitOrder(order)
             # update position information based on the order that was just submitted
 
-    """
-    Updates the status/parameters of a position based on a transmitted order
-    """
     def __update_position(self, order):
+        """
+        Updates the status/parameters of a position based on a transmitted order
+        """
         # TODO
         return
 
-    """
-    Find positions to enter by consulting strategies and accumulating orders.
-    """
     def __enter_trades(self):
+        """
+        Find positions to enter by consulting strategies and accumulating orders.
+        """
         # TODO:
         return
 
-    """
-    Manage open positions.
-      - Determine if exits should be made for open positions
-      - Continue filling scaled-entries and scaled-exits
-    Any qualified order that results from strategy consultation is appended to the tradeQueue and emptied on 
-    each iteration.
-    """
     def __manage_positions(self):
+        """
+        Manage open positions.
+        - Determine if exits should be made for open positions
+        - Continue filling scaled-entries and scaled-exits
+        Any qualified order that results from strategy consultation is appended to the tradeQueue and emptied on 
+        each iteration.
+        """
         # TODO:
         return
