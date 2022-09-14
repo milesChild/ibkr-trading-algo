@@ -35,6 +35,7 @@ class newTrader:
     # Method that initializes a connection between this system and the wrapped ibkr api on another server
     def __connect_to_broker(self):
         # TODO: Connect to the broker via an api?
+        # is a broker connection method what we want, or do we want a package in this repo that provides the tools to submit orders to our EC2 API?
         return
 
     # Initialize the file to which a log will be written
