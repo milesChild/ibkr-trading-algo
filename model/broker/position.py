@@ -3,17 +3,17 @@ class to represent a position (internal record-keeping object)
 """
 
 class position:
-    PositionID = 0  # TODO: How to set unique posIDs
-    Contract = None
-    Qty = 0
-    Value = 0
-    Strategy = None
-    TotalEntryIncrements = 1  # will be > 1 for scaled entries, otherwise = 1
-    TotalExitIncrements = 1  # will be > 1 for scaled exits, otherwise = 1
-    CurEntryIncrements = 0
-    CurExitIncrements = 0
-    Entries = dict()  # orderID -> order
-    Exits = dict()  # orderID -> order
+    positionID = 0  # TODO: How to set unique posIDs
+    contract = None
+    qty = 0
+    value = 0
+    strategy = None
+    totalEntryIncrements = 1  # will be > 1 for scaled entries, otherwise = 1
+    totalExitIncrements = 1  # will be > 1 for scaled exits, otherwise = 1
+    curEntryIncrements = 0
+    curExitIncrements = 0
+    entries = dict()  # orderID -> order
+    exits = dict()  # orderID -> order
 
     def __init__(self, contract, strategy, entries, exits):
         """
@@ -24,10 +24,10 @@ class position:
         :param exits: the total number of exits that are required to totally divest from a full position
         """
         self.setPositionID()
-        self.Contract = contract
-        self.Strategy = strategy
-        self.TotalEntryIncrements = entries
-        self.TotalExitIncrements = exits
+        self.contract = contract
+        self.strategy = strategy
+        self.totalEntryIncrements = entries
+        self.totalExitIncrements = exits
 
     # TODO: Decide whether avg, totValue, etc. will be calculated via method (available on request) or stored in a
     #       field (and continuously updated)
@@ -35,26 +35,26 @@ class position:
     # returns the average fill price for the position
     def __calc_avg(self):
         tot = 0
-        for order in self.Entries:
+        for order in self.entries:
             # dont know exactly what the field is called here
             tot += (order.price * order.qty)
 
-        return tot / self.Qty
+        return tot / self.qty
 
     # uses the current price of the contract for this position to update the total value of the position
     def __update_value(self, price):
-        self.Value = price * self.Qty
+        self.value = price * self.qty
 
     # adds an entry to the position
     def __append_entry(self, order):
         # TODO: Throw error if entry increments is already maxed out??
-        self.Entries[order.OrderID] = order
+        self.entries[order.OrderID] = order
         self.qty += order.qty
-        self.CurEntryIncrements += 1
+        self.curEntryIncrements += 1
 
     # adds an exit to the position
     def __append_exit(self, order):
         # TODO: Throw error if entry increments is already maxed out??
-        self.Exits[order.OrderID] = order
+        self.exits[order.OrderID] = order
         self.qty -= order.qty
-        self.CurExitIncrements += 1
+        self.curExitIncrements += 1

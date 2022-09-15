@@ -1,4 +1,3 @@
-
 class BBout:
     """
     New Strategy Example
@@ -30,6 +29,23 @@ class BBout:
         """
         return
 
+    def __enter_trades(self):
+        trades = []
+        for contract in self.contracts:
+            tickData = None  ## TODO: How will we pass data to these strats based on the contract?
+            trades.append(self.determineEntry(tickData, contract))
+
+        return trades
+
+    # Accepts a list of positions and determines if additional entries (for scaled entry positions) or exits should be
+    # made
+    def __manage_positions(self, positions):
+        trades = []
+        for position in positions:
+            tickData = None  # TODO: Determine how we will give it tickData (lol)
+            # No scaled entries in this one, so all we have to do is check for exits
+            trades.append(self.determineExit(tickData, position))
+
     def determineEntry(self, tickData, contract):
         """
         Determines whether an entry into a contract should be made given:
@@ -46,17 +62,18 @@ class BBout:
         if tick >= self.historicalData["TriggerPrice"][contract] and \
                 self.historicalData["LastTick"][contract] < self.historicalData["TriggerPrice"][contract]:
             o = self.generateOrder("BUY", tickData, contract)
-        else:
-            o = False
         # update the "last tick" in historical data
         self.historicalData["LastTick"][contract] = tick
         return o
 
-    def determineExit(self, tickData, order):
+    # Takes a position and determines whether an exit should be made
+    # In this particular case, there are no partial exits so its all or nothing
+    def determineExit(self, tickData, position):
         # stop-loss / profit-target handled in one line
         tick = tickData.price
-        if tick <= order.fillPrice * .9985 or tick >= order.fillPrice * 1.0025:
-            return self.generateOrder("SELL", tickData, order.contract)
+        avg = position.__calc_avg()
+        if tick <= avg * .9985 or tick >= avg * 1.0025:
+            return self.generateOrder("SELL", tickData, position.contract)
         # in the trader, make sure the order status is updated to closed after the exit is filled
 
 

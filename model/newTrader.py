@@ -104,8 +104,9 @@ class newTrader:
     Find positions to enter by consulting strategies and accumulating orders.
     """
     def __enter_trades(self):
-        # TODO: Iterate thru the strategies and consult them for entries based on incoming data
-        return
+        # TODO: Figure out how we provide data to these trades
+        for strategy in self.strategies:
+            self.tradeQueue.append(strategy.__enter_trades())
 
     """
     Manage open positions.
@@ -115,8 +116,10 @@ class newTrader:
     each iteration.
     """
     def __manage_positions(self):
-        # TODO:
-        return
+        # TODO: Figure out how we provide data to these trades
+        for strategy in self.strategies:
+            respective_positions = [sub[strategy] for sub in self.positions]  # TODO: Check this line
+            self.tradeQueue.append(strategy.__manage_positions(respective_positions))
 
     """
     To add a new position to the list of active positions
@@ -125,7 +128,7 @@ class newTrader:
         self.positions[position.PositionID] = position
 
     """
-       Updates the status/parameters of a position based on a transmitted order
+    Updates the status/parameters of a position based on a transmitted order
     """
     def __update_position(self, order):
         # TODO:
