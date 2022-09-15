@@ -9,7 +9,7 @@ class newTrader:
     """
     broker = None  # ibkr connection for trade placement
     tradeQueue = []  # Queue of trades that is filled & emptied on each loop iteration
-    positions = dict()  # OrderID -> Order
+    positions = dict()  # PositionID -> Position
     log = None  # Log that info from runtime will be stored on
     risk_manager = None  # high-authority object for risk mgmt
     strategies = None  # list of strategies that will be traded when run
@@ -19,27 +19,21 @@ class newTrader:
         Initialize objects for each instrument-strategy pair and the Polygon websocket object.
         TODO: add code to initialize risk management operation
         """
-        self.__connect_to_broker()
-        self.log = self.__init_log()
+        self.connect_to_broker()
+        self.log = self.init_log()
         self.__initialize_strategies()
         self.last_msg: WebSocketMessage = None
         self.socket_client = WebSocketClient(subscriptions=[
                                              "object should provide a field or a method to efficiently grab all contracts"])
 
-    def start(self):
-        """
-        Run Polygon websocket and begin trading on new messages (public).
-        """
-        self.socket_client.connect(self.__handle_msg)
-
     # Method that initializes a connection between this system and the wrapped ibkr api on another server
-    def __connect_to_broker(self):
+    def connect_to_broker(self):
         # TODO: Connect to the broker via an api?
         # is a broker connection method what we want, or do we want a package in this repo that provides the tools to submit orders to our EC2 API?
         return
 
     # Initialize the file to which a log will be written
-    def __init_log(self):
+    def init_log(self):
         # open the file in the write mode
         f = open('ibkr-algo/model', 'w')
 
@@ -51,10 +45,16 @@ class newTrader:
         return
 
     # Append a message to the log
-    def __append_to_log(self, msg):
+    def append_to_log(self, msg):
         # create the csv writer
         writer = csv.writer(self.log)
         writer.writerow(msg)
+
+    def start(self):
+        """
+        Run Polygon websocket and begin trading on new messages (public).
+        """
+        self.socket_client.connect(self.__handle_msg)
 
     def __handle_msg(self, msg: WebSocketMessage):
         """
@@ -91,36 +91,42 @@ class newTrader:
         # TODO: Use a rm object to determine whether positions need to be liquidated/trading needs to stop
         return
 
+    """
+    Empty the order queue and transmit orders one-by-one to ibkr
+    """
     def __empty_queue(self):
-        """
-        Empty the order queue and transmit orders one-by-one to ibkr
-        """
         for order in self.tradeQueue:
             # This will require refinement of parameters passed... see old model for examples
             self.broker.transmitOrder(order)
             # update position information based on the order that was just submitted
 
-    def __update_position(self, order):
-        """
-        Updates the status/parameters of a position based on a transmitted order
-        """
-        # TODO
+    """
+    Find positions to enter by consulting strategies and accumulating orders.
+    """
+    def __enter_trades(self):
+        # TODO: Iterate thru the strategies and consult them for entries based on incoming data
         return
 
-    def __enter_trades(self):
-        """
-        Find positions to enter by consulting strategies and accumulating orders.
-        """
+    """
+    Manage open positions.
+      - Determine if exits should be made for open positions
+      - Continue filling scaled-entries and scaled-exits
+    Any qualified order that results from strategy consultation is appended to the tradeQueue and emptied on 
+    each iteration.
+    """
+    def __manage_positions(self):
         # TODO:
         return
 
-    def __manage_positions(self):
-        """
-        Manage open positions.
-        - Determine if exits should be made for open positions
-        - Continue filling scaled-entries and scaled-exits
-        Any qualified order that results from strategy consultation is appended to the tradeQueue and emptied on 
-        each iteration.
-        """
+    """
+    To add a new position to the list of active positions
+    """
+    def __add_position(self, position):
+        self.positions[position.PositionID] = position
+
+    """
+       Updates the status/parameters of a position based on a transmitted order
+    """
+    def __update_position(self, order):
         # TODO:
         return
