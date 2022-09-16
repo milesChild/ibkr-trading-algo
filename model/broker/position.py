@@ -1,10 +1,11 @@
 """
 class to represent a position (internal record-keeping object)
 """
+from model.broker.order import Order
 
 global nextPositionID
 
-class position:
+class Position:
     positionID = 0  # TODO: How to set unique posIDs
     contract = None
     qty = 0
@@ -31,13 +32,18 @@ class position:
         self.totalEntryIncrements = entries
         self.totalExitIncrements = exits
 
-    def __init__(self, order):
+    """
+    Used when creating new positions from an initializing order.
+    """
+    def __init__(self, order: Order):
         self.positionID = nextPositionID
+        order.set_positionID(nextPositionID)
+        nextPositionID += 1
         self.contract = order.contract
         self.qty = order.qty
         self.strategy = order.strategy
         self.curEntryIncrements = 1
-        self.entries[order.orderID] = order
+        self.entries[order.id] = order
 
 
     # TODO: Decide whether avg, totValue, etc. will be calculated via method (available on request) or stored in a
@@ -57,14 +63,14 @@ class position:
         self.value = price * self.qty
 
     # adds an entry to the position
-    def __append_entry(self, order):
+    def append_entry(self, order):
         # TODO: Throw error if entry increments is already maxed out??
         self.entries[order.OrderID] = order
         self.qty += order.qty
         self.curEntryIncrements += 1
 
     # adds an exit to the position
-    def __append_exit(self, order):
+    def append_exit(self, order):
         # TODO: Throw error if entry increments is already maxed out??
         self.exits[order.OrderID] = order
         self.qty -= order.qty

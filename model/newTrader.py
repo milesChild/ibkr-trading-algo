@@ -2,6 +2,7 @@ from polygon.websocket.models import WebSocketMessage
 from polygon import WebSocketClient
 import csv
 
+from model.broker.order import Side
 from model.broker.position import position
 
 
@@ -108,11 +109,11 @@ class newTrader:
     def __enter_trades(self):
         for strategy in self.strategies:
             newTrades = strategy.__enter_trades(self.last_msg)
-            self.tradeQueue.append(newTrades)
+            self.tradeQueue.extend(newTrades)
 
             for order in newTrades:
                 np = position(order)
-                self.positions[np.positionID] = np
+                self.__add_position(np)
 
     """
     Manage open positions.
@@ -122,10 +123,13 @@ class newTrader:
     each iteration.
     """
     def __manage_positions(self):
-        # TODO: Figure out how we provide data to these trades
         for strategy in self.strategies:
-            respective_positions = [sub[strategy] for sub in self.positions]  # TODO: Check this line
-            self.tradeQueue.append(strategy.__manage_positions(self.last_msg, respective_positions))
+            respective_positions = [sub[strategy] for sub in self.positions]
+            newTrades = strategy.__manage_positions(self.last_msg, respective_positions)
+            self.tradeQueue.extend(newTrades)
+
+            for order in newTrades:
+                self.__update_position(order)
 
     """
     To add a new position to the list of active positions
@@ -137,5 +141,17 @@ class newTrader:
     Updates the status/parameters of a position based on a transmitted order
     """
     def __update_position(self, order):
-        # TODO:
-        return
+        """
+        Based on the position which the order maps to, update hte position information respective to the parameters
+        of the new order.
+        :param order: A new order (to be executed) that modifies the state of the position it maps to
+        :return: An updated position that reflects the old position when modified based on this order's effects
+        """
+        position = self.positions[order.positionID]
+        # if this is a sell order, it means we are divesting from the position
+        if order.side == Side.SELL:
+            position.append_exit(order)
+            self.positions[order.positionID] = position
+        if order.side == Side.BUY:
+            position.append_entry(order)
+            self.positions[order.positionID] = position

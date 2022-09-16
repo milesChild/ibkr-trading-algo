@@ -61,10 +61,10 @@ class BBout:
         # if bull breakout then enter
         if last >= self.historicalData["TriggerPrice"][contract] and \
                 self.historicalData["LastTick"][contract] < self.historicalData["TriggerPrice"][contract]:
-            o = self.__generate_order("BUY", last, contract)
+            self.historicalData["LastTick"][contract] = last
+            return self.__generate_order(Side.BUY, last, contract)
         # update the "last tick" in historical data
         self.historicalData["LastTick"][contract] = last
-        return o
 
     # Takes a position and determines whether an exit should be made
     # In this particular case, there are no partial exits so its all or nothing
@@ -75,9 +75,17 @@ class BBout:
             return self.__generate_order(Side.SELL, position.contract)
         # in the trader, make sure the order status is updated to closed after the exit is filled
 
-    def __generate_order(self, type, last,  contract):
-        return Order(type, contract)
+    def __generate_order(self, type, last, contract):
+        qty = self.__calculate_qty(contract, last)
+        return Order(type, qty, contract)
 
+    def __generate_order(self, type, position):
+        qty = 0
+        return Order(type, qty, position)
+
+    def __calculate_qty(self, contract, last):
+        # TODO: Figure out optimal position sizing based on the strategy
+        return 0
 
 """
 What is missing?
