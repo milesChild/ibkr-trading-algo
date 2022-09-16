@@ -1,3 +1,6 @@
+from model.broker.order import Side, Order
+
+
 class BBout:
     """
     New Strategy Example
@@ -29,24 +32,22 @@ class BBout:
         """
         return
 
-    def __enter_trades(self):
+    def enter_trades(self, tickData):
         trades = []
         for contract in self.contracts:
-            tickData = None  ## TODO: How will we pass data to these strats based on the contract?
-            trades.append(self.determineEntry(tickData, contract))
+            trades.append(self.__determine_entry(tickData[contract.symbol]["p"], contract))  # gets the "price" section of the respective contract entry in the JSON
 
         return trades
 
     # Accepts a list of positions and determines if additional entries (for scaled entry positions) or exits should be
     # made
-    def __manage_positions(self, positions):
+    def manage_positions(self, tickData, positions):
         trades = []
         for position in positions:
-            tickData = None  # TODO: Determine how we will give it tickData (lol)
             # No scaled entries in this one, so all we have to do is check for exits
-            trades.append(self.determineExit(tickData, position))
+            trades.append(self.__determine_exit(tickData[position.contract.symbol]["p"], position))
 
-    def determineEntry(self, tickData, contract):
+    def __determine_entry(self, last, contract):
         """
         Determines whether an entry into a contract should be made given:
        - The strategy parameters for entry
@@ -57,24 +58,25 @@ class BBout:
         Note: I do not know how data will be passed by polygon, so I am assuming that the "tickData"
         will not just be a simple last price.
         """
-        tick = tickData.price
         # if bull breakout then enter
-        if tick >= self.historicalData["TriggerPrice"][contract] and \
+        if last >= self.historicalData["TriggerPrice"][contract] and \
                 self.historicalData["LastTick"][contract] < self.historicalData["TriggerPrice"][contract]:
-            o = self.generateOrder("BUY", tickData, contract)
+            o = self.__generate_order("BUY", last, contract)
         # update the "last tick" in historical data
-        self.historicalData["LastTick"][contract] = tick
+        self.historicalData["LastTick"][contract] = last
         return o
 
     # Takes a position and determines whether an exit should be made
     # In this particular case, there are no partial exits so its all or nothing
-    def determineExit(self, tickData, position):
+    def __determine_exit(self, last, position):
         # stop-loss / profit-target handled in one line
-        tick = tickData.price
         avg = position.__calc_avg()
-        if tick <= avg * .9985 or tick >= avg * 1.0025:
-            return self.generateOrder("SELL", tickData, position.contract)
+        if last <= avg * .9985 or last >= avg * 1.0025:
+            return self.__generate_order(Side.SELL, position.contract)
         # in the trader, make sure the order status is updated to closed after the exit is filled
+
+    def __generate_order(self, type, last,  contract):
+        return Order(type, contract)
 
 
 """

@@ -25,7 +25,7 @@ class Order:
     Class defining an order to be placed.
     """
 
-    def __init__(self, side: Side, qty: int, symbol: str, otype: OrderType, price: float):
+    def __init__(self, side: Side, qty: int, contract: contract, otype: OrderType, price: float):
         """
         Construct an order from the standard order components.
         """

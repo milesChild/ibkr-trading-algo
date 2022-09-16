@@ -2,6 +2,8 @@ from polygon.websocket.models import WebSocketMessage
 from polygon import WebSocketClient
 import csv
 
+from model.broker.position import position
+
 
 class newTrader:
     """
@@ -104,9 +106,13 @@ class newTrader:
     Find positions to enter by consulting strategies and accumulating orders.
     """
     def __enter_trades(self):
-        # TODO: Figure out how we provide data to these trades
         for strategy in self.strategies:
-            self.tradeQueue.append(strategy.__enter_trades())
+            newTrades = strategy.__enter_trades(self.last_msg)
+            self.tradeQueue.append(newTrades)
+
+            for order in newTrades:
+                np = position(order)
+                self.positions[np.positionID] = np
 
     """
     Manage open positions.
@@ -119,7 +125,7 @@ class newTrader:
         # TODO: Figure out how we provide data to these trades
         for strategy in self.strategies:
             respective_positions = [sub[strategy] for sub in self.positions]  # TODO: Check this line
-            self.tradeQueue.append(strategy.__manage_positions(respective_positions))
+            self.tradeQueue.append(strategy.__manage_positions(self.last_msg, respective_positions))
 
     """
     To add a new position to the list of active positions

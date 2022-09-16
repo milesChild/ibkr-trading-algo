@@ -2,6 +2,8 @@
 class to represent a position (internal record-keeping object)
 """
 
+global nextPositionID
+
 class position:
     positionID = 0  # TODO: How to set unique posIDs
     contract = None
@@ -28,6 +30,15 @@ class position:
         self.strategy = strategy
         self.totalEntryIncrements = entries
         self.totalExitIncrements = exits
+
+    def __init__(self, order):
+        self.positionID = nextPositionID
+        self.contract = order.contract
+        self.qty = order.qty
+        self.strategy = order.strategy
+        self.curEntryIncrements = 1
+        self.entries[order.orderID] = order
+
 
     # TODO: Decide whether avg, totValue, etc. will be calculated via method (available on request) or stored in a
     #       field (and continuously updated)
