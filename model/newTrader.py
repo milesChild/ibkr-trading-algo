@@ -3,7 +3,7 @@ from polygon import WebSocketClient
 import csv
 
 from model.broker.order import Side
-from model.broker.position import position
+from model.broker.position import Position
 
 
 class newTrader:
@@ -112,7 +112,7 @@ class newTrader:
             self.tradeQueue.extend(newTrades)
 
             for order in newTrades:
-                np = position(order)
+                np = Position(order)
                 self.__add_position(np)
 
     """

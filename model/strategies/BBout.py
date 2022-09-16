@@ -1,4 +1,5 @@
 from model.broker.order import Side, Order
+from model.broker.position import Position
 
 
 class BBout:
@@ -75,9 +76,10 @@ class BBout:
             return self.__generate_order(Side.SELL, position.contract)
         # in the trader, make sure the order status is updated to closed after the exit is filled
 
-    def __generate_order(self, type, last, contract):
+    def __generate_order(self, type, last, contract, position: Position=None):
         qty = self.__calculate_qty(contract, last)
-        return Order(type, qty, contract)
+        if position == None:
+            return Order(type, qty, contract)
 
     def __generate_order(self, type, position):
         qty = 0
@@ -86,13 +88,3 @@ class BBout:
     def __calculate_qty(self, contract, last):
         # TODO: Figure out optimal position sizing based on the strategy
         return 0
-
-"""
-What is missing?
-
-  - Scaled entries & exits implementation
-  - Order logging/storage of necessary information
-  - Error handling
-  - Specifics on how collectHistoricalData will be implemented/refreshed according to the strategy's requirements
-  
-"""

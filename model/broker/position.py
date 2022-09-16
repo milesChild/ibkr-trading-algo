@@ -45,10 +45,6 @@ class Position:
         self.curEntryIncrements = 1
         self.entries[order.id] = order
 
-
-    # TODO: Decide whether avg, totValue, etc. will be calculated via method (available on request) or stored in a
-    #       field (and continuously updated)
-
     # returns the average fill price for the position
     def __calc_avg(self):
         tot = 0

@@ -3,7 +3,6 @@ from enum import Enum
 from model.broker.order import Order
 import order
 
-
 class Broker(ABC):
     """
     Abstract class representing a set of Broker tools.

@@ -22,6 +22,7 @@ class OrderType(Enum):
     """
     LIMIT = "LIMIT"
     MARKET = "MKT"
+    # TODO: Support for other order types ibkr
 
 
 class Order:
