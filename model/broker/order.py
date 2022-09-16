@@ -2,6 +2,8 @@ from datetime import datetime
 from enum import Enum
 import uuid
 
+from ibapi.contract import Contract
+
 from model.broker.position import Position
 
 
@@ -32,25 +34,28 @@ class Order:
     fillPrice: float
     orderID: int
     positionID: int
+    timestamp: str
 
 
-    def __init__(self, side: Side, qty: int, contract: contract, otype: OrderType, price: float):
+    def __init__(self, side: Side, qty: int, contract: Contract, otype: OrderType, price: float):
         """
         Construct an order from the standard order components.
         """
         self.side = side
         self.qty = qty
-        self.symbol = symbol
+        self.contract = contract
         self.otype = otype
         self.price = price
 
         self.id = uuid.uuid4()
+        self.timestamp = datetime.now().strftime("%H:%M:%S")
 
     def __init__(self, side: Side, qty: int, position: Position):
         self.side = side
         self.qty = qty
-        self.symbol = position.contract.symbol
+        self.contract = position.contract
         self.positionID = position.positionID
+        self.timestamp = datetime.now().strftime("%H:%M:%S")
 
     def __str__(self):
         """

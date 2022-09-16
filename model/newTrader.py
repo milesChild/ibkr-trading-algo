@@ -98,10 +98,10 @@ class newTrader:
     Empty the order queue and transmit orders one-by-one to ibkr
     """
     def __empty_queue(self):
-        for order in self.tradeQueue:
-            # This will require refinement of parameters passed... see old model for examples
+
+        while len(self.tradeQueue) > 0:
+            order = self.tradeQueue.pop(0)
             self.broker.transmitOrder(order)
-            # update position information based on the order that was just submitted
 
     """
     Find positions to enter by consulting strategies and accumulating orders.
